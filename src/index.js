@@ -1,23 +1,20 @@
 const serverless = require("serverless-http");
 const express = require("express");
-const { neon, neonConfig } = require("@neondatabase/serverless");
+const { neon } = require("@neondatabase/serverless");
+const { getDatabaseUrl } = require("./lib/secrets");
 
 const app = express();
 
-const dbClient = async () => {
-  //for http connections
-  //non-pooling
-  neonConfig.fetchConnectionCache = true;
-  const sql = neon(process.env.DATABASE_URL);
-  return sql;
-};
+const DATABASE_URL_SSM_PARAM = "/serverless-nodejs-api/prod/database-url";
+
+const dbClient = async () => {};
 
 app.get("/", async (req, res, next) => {
-  const sql = await dbClient();
-  const [result] = await sql`select now()`;
+  const sql = await getDatabaseUrl();
+  // const [result] = await sql`select now()`;
   return res.status(200).json({
     message: "Hello from root!",
-    result: result.now,
+    result: sql,
   });
 });
 
@@ -33,4 +30,6 @@ app.use((req, res, next) => {
   });
 });
 
-module.exports.handler = serverless(app);
+module.exports.handler = serverless(app, {
+  callbackWaitsForEmptyEventLoop: false,
+});
