@@ -4,15 +4,24 @@ const AWS_REGION = "ap-southeast-1";
 
 const DATABASE_URL_SSM_PARAM = "/serverless-nodejs-api/prod/database-url";
 
-const getDatabaseUrl = async () => {
-  const client = new SSMClient({ region: AWS_REGION });
-  const paramStoreData = {
-    Name: DATABASE_URL_SSM_PARAM,
-    WithDecryption: true,
-  };
-  const command = new GetParameterCommand(paramStoreData);
-  const result = await client.send(command);
-  return result.Parameter.Value;
-};
+// Create a new SSM client
+const ssmClient = new SSMClient({ region: AWS_REGION });
 
-module.exports.getDatabaseUrl = getDatabaseUrl;
+async function getParameter(parameterName = DATABASE_URL_SSM_PARAM) {
+  // Create a new command with the parameter name
+  const command = new GetParameterCommand({ Name: parameterName, WithDecryption: true });
+
+ 
+  try {
+    const response = await ssmClient.send(command);
+    if (response.Parameter && response.Parameter.Value) {
+      return response.Parameter.Value;
+    } else {
+      throw new Error(`Parameter ${parameterName} does not exist or has no value`);
+    }
+  } catch (error) {
+    console.error(`Error getting parameter ${parameterName}: ${error}`);
+  }
+}
+
+module.exports.getParameter = getParameter;

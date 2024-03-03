@@ -1,16 +1,14 @@
 const serverless = require("serverless-http");
 const express = require("express");
 const { neon } = require("@neondatabase/serverless");
-const { getDatabaseUrl } = require("./lib/secrets");
+const { getDatabaseUrl, getParameter } = require("./lib/secrets");
 
 const app = express();
 
 const DATABASE_URL_SSM_PARAM = "/serverless-nodejs-api/prod/database-url";
 
-const dbClient = async () => {};
-
 app.get("/", async (req, res, next) => {
-  const sql = await getDatabaseUrl();
+  const sql = await getParameter().then((response = console.log(response)));
   // const [result] = await sql`select now()`;
   return res.status(200).json({
     message: "Hello from root!",
@@ -30,6 +28,4 @@ app.use((req, res, next) => {
   });
 });
 
-module.exports.handler = serverless(app, {
-  callbackWaitsForEmptyEventLoop: false,
-});
+module.exports.handler = serverless(app);
